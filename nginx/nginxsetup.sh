@@ -1,63 +1,153 @@
 #!/usr/bin/env bash
-###########################################################################
-###                                                               	    ###
-###                    SYSADMINUBUNTU / NGINXSETUP.SH    	         	###
-###                              by mudy45@github                       ###
-###                                                                 	###
-###                                                                  	###
-### Maintaining a proper production Nginx webserver will be easier and 	###
-### fun with this script. The technology develop so fast, adds so many  ###
-### point of failure, some force sysadmin to recompile, other causing 	###
-### compile errors. Dynamic modules still not the first choice for now. ###
-###                                                                  	###
-### This script allows easy generation of custom Nginx apt package for  ###
-### GNU Linux. Included modules are:                                   	###
-### PageSpeed, NAXSI, PCRE, OpenSSL,                                   	###
-###                                                                  	###
-###---------------------------------------------------------------------###
-###                                                                  	###
-### License	    : GNU General Public License version 3        	        ###
-### Copyright   : Mudy Situmorang (mudy45@gmail.com)                    ###
-### Tested OS	: Ubuntu 16.04.3 LTS Xenial                             ###
-### Github      : https://github.com/mudy45/sysadminubuntu     	        ###
-### Version     : 0.1 alpha                                            	###
-### File        : /nginx/nginxsetup.sh                                	###
-### Update      : 20170917                                              ###
-###                                                                  	###
-###---------------------------------------------------------------------###
-###                                                                 	###
-### Fixed folder:                                                 	    ###
-### Nginx User & Group = www-data				                        ###
-### Nginx HTTP Folder  = /var/www                                  	    ###
-### Nginx Log Folder   = /var/log/nginx                           	    ###
-### Nginx Cache Folder = /var/cache/nginx                         	    ###
-###                                                               	    ###
-###########################################################################
-### Versions                            								###
-###                                                                  	###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-doLinux       = "Ubuntu"       # Ubuntu or Debian
-linuxVer      = "xenial"       # Release Name
-### Check version https://openssl.org/source
-verOpenssl    = "1.0.2l"
-### Check version https://www.modpagespeed.com/doc/release_notes
-verPagespeed  = "1.12.34.2-stable"
-### Check version https://ftp.pcre.org/pub/pcre/
-verPcre      = "8.41"
-### Check version https://zlib.net/
-verZlib      = "1.2.11"
-###-----> https://github.com/nbs-system/naxsi/releases
-verNaxsi    = "0.55.3"
-###                                                                	    ###
-###########################################################################
+###############################################################################
+###                                                               	        ###
+###                    SYSADMINUBUNTU / NGINXSETUP.SH    	         	    ###
+###                              by mudy45@github                           ###
+###                                                                 	    ###
+###                                                                     	###
+### Maintaining a proper production Nginx webserver will be easier and   	###
+### fun with this script. The technology develop so fast, adds so many      ###
+### point of failure, some force sysadmin to recompile, other causing 	    ###
+### compile errors. Dynamic modules still not the first choice for now.     ###
+###                                                                     	###
+### This script allows easy generation of custom Nginx apt package for      ###
+### GNU Linux. Included modules are:                                     	###
+### PageSpeed, NAXSI, PCRE, OpenSSL,                                     	###
+###                                                                      	###
+###-------------------------------------------------------------------------###
+###                                                                         ###
+### License	    : GNU General Public License version 3        	            ###
+### Copyright   : Mudy Situmorang (mudy45@gmail.com)                        ###
+### Tested OS	: Ubuntu 16.04.3 LTS Xenial                                 ###
+### Github      : https://github.com/mudy45/sysadminubuntu     	            ###
+### Version     : 0.1 alpha --> WARNING: DO NOT USE !!!!                    ###
+### File        : /nginx/nginxsetup.sh                                      ###
+### Release		: Not Available                                             ###
+### Update      : 20170917                                                  ###
+###                                                                         ###
+###############################################################################
 
+###############################################################################
+### help()                                                             	    ###
+### show usage info                                                    	    ###
+###-------------------------------------------------------------------------###
+###                                                                  	    ###
+help() {
+	[[ -n ${1} ]] && echo -e "** ${1}\n"
+  	cat <<EOU
+Compile Custom Nginx on ${buildDir}, save downloaded packages on 
+${buildDir}/sourceset- ${sourceSet). COfiguration in the script.
+-h | --help     	This message.
+-9 | --view9		View all repo, add all repository then show available
+					Nginx version. Usefull to decide which one to use.
+					Remove added repo using -0.
+-5 | --repo4		Compile using Nginx repo
+-4 | --repo3		Compile using PPA stable repo
+-3 | --repo3		Compile using PPA stable repo
+-2 | --repo2		Compile using this backports repo
+-1 | --repo1		Compile using this Linux repo (standard src)
+-0 | --view0		Remove all Nginx repo, view, not compile, not upgrade.
+
+-c | --compile		Generic function, do normal compile. If already done
+                	once do fast re-compile.
+-f | --fastcomp 	Fast re-compile, not doing dhparam, no apt-get.
+-e | --erase		Erase before compile.
+-i | --install		Configure compiled Nginx.
+-r | --remove		Remove newly installed Nginx.
+-u | --uninstall	Uninstall existing web servers.
+-b | --backupset	Backup current source set to compile later.
+-s | --compileset	Compile an existing backup set
+
+Setup folder:                                                 	  
+Nginx User & Group = www-data				                      
+Nginx HTTP Folder  = /var/www                                  	  
+Nginx Log Folder   = /var/log/nginx                           	  
+Nginx Cache Folder = /var/cache/nginx                         	  
+
+	EOU
+ 	exit
+}
+
+###############################################################################
+### Choose Ubuntu or Debian, run Review, fill table below, decide  	    	###
+### your distro, target build, repo, check module, then compile.  	   		###
+###-------------------------------------------------------------------------###
+### http://nginx.org/en/download.html					                	###
+### current stable	: nginx 1.12.1 & 1.13.3				               		###
+###-------------------------------------------------------------------------###
+### 		Ubuntu 16.04 LTS Xenial					           		        ###
+### Ubuntu Repo		: nginx 1.10.3-0ubuntu0.16.04.2		       	    	    ###
+### PPA Repo		: nginx 1.13.4				   	        	            ###
+### Nginx Repo		: nginx 1.12.1				   	    	                ###
+### 		Ubuntu 16.10 Yaketty						                    ###
+### Ubuntu Repo	 	: nginx 1.10.1-0ubuntu1.3			   	                ###
+### PPA Repo	 	: 							                            ###
+### Nginx Repo	 	:				         		                        ###
+###-------------------------------------------------------------------------###
+### 		Debian 8 Jessie                                       	    	###
+### Debian Repo		: nginx (1.6.2-5+deb8u5)			            	    ###
+### 		Debian 8 Jessie Backports                           	   	    ###
+### Debian Repo		: nginx (1.10.3-1+deb9u1~bpo8+2)	    	            ###
+### 		Debian 9 Stretch                            	                ###
+### Debian Repo 	: nginx (1.10.3-1+deb9u1)				                ###
+###			Debian 9 stretch Backports                 	               		###
+### Debian Repo		: nginx (1.13.3-1~bpo9+1)		                	    ###
+### PPA Repo		: nginx 1.13.4				   	            	        ###
+### Nginx Repo		:                                        	 	        ###
+###-------------------------------------------------------------------------###
+###		                                                               	    ###
+#---> TODO: function to automate distro name loading run here                                                             		
+			doLinux       = "Ubuntu"       # Ubuntu or Debian
+			linuxVer      = "xenial"       # Release Name
+###		                                                               	    ###
+###-------------------------------------------------------------------------###
+### Module Versions                       									###
+### Check each version latest, fallback to known good version          		###
+###		                                                               	    ###
+###-------------------------------------------------------------------------###
+### Release Specific Modules                                      	    	###
+###-------------------------------------------------------------------------###
+###                                                                	    	###
+### Module 		  : OpenSSL - HTTPS support									###
+### Check version : https://openssl.org/source								###
+### Known good	  : 1.0.2l 													###
+			verOpenssl    = "1.0.2l"
+### Module 		  : PageSpeed - Some Google stuff							###
+### Check version : https://www.modpagespeed.com/doc/release_notes			###
+### Known good	  : 1.12.34.2-stable										###
+			verPagespeed  = "1.12.34.2-stable"
+### Module 		  : Zlib - Compression library								###
+### Check version : https://ftp.pcre.org/pub/pcre/							###
+### Known good	  : 8.41 													###
+			verPcre      = "8.41"
+### Module 		  : Zlib - Compression library								###
+### Check version : https://zlib.net/										###
+### Known good	  : 1.2.11 													###
+			verZlib      = "1.2.11"
+### Module 		  : Naxsi - Nginx Anti Injection							###
+### Check version : https://github.com/nbs-system/naxsi/releases			###
+### Known good	  : 0.55.3													###
+			verNaxsi    = "0.55.3"
+###                                                                	    	###
+###-------------------------------------------------------------------------###
+### Modules Using Latest Github Master Branch (regardless of version)      	###
+###-------------------------------------------------------------------------###
+###                                                                 		###
+### Module 		  : 														###
+### Github		  : https://github.com/										###
+###                                                                 		###
+###                                                                	    	###
+###############################################################################
+### Parameters, configurations, and variables                     	    	###
+###                                                                	    	###
+###-------------------------------------------------------------------------###
+### 	                                                               	    ###
 cpuCount=$(nproc --all)
 currentPath="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ###-----> Dhparam generation bits
 dhparamFile = "/etc/nginx/ssl/dhparam.pem"
 dhparamBits = "4096"
-###-----> Only review versions, to choose target versions & repo
+###-----> Only review versions, to choose target versions & repo			
 doReviewonly = "0"
 ###-----> Disable on re-compile, no more apt-get
 doGetapt = "1"
@@ -94,50 +184,18 @@ elif [ "$1" == "--compile" -o "$1" == "-c" ]; then
 	doCompile = "1"
 	doCleanup = "0"
 fi
-
-###########################################################################
-### Prepare process						                             	###
-###                                                                    	###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-prepareonce()
-{
-###---------------------------------------------------------------------###
-### Check and Set Nginx User						                    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-    local nginxUserExists=$(id -u www-data > /dev/null 2>&1; echo $?)
-    if [ "${nginxUserExists}" != "0" ];
-    then
-	useradd -d /etc/nginx -s /bin/false nginx
-    fi
-###---------------------------------------------------------------------###
-### Generate DHParam for Nginx OpemSSL              					###
-### Will take very long time   				                         	###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-    if [ "${doDhparam}" != "0" ];
-    then
-	    openssl dhparam -out ${dhparamFile} ${dhparamBits}
-    fi
-###                                                               	    ###
-###---------------------------------------------------------------------###
-}
-###                                                               	    ###
-###########################################################################
+###                                         	                      	    ###
+###-------------------------------------------------------------------------###
+### End of params & configs                   	                      	    ###
+###############################################################################
 
 
-###########################################################################
-### Review Target & Repo for Nginx Package				                ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-### http://nginx.org/en/download.html					                ###
-### current stable		: nginx 1.12.1 & 1.13.3			                ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-getnginxsource()
-{
+###############################################################################
+### setRepolinux()	             							             	###
+### using repo Ubuntu or Debian		                                       	###
+###-------------------------------------------------------------------------###
+###                                     	                          	    ###
+setRepolinux()	{
 	if [ "${doLinux}" != "Ubuntu" ];
 	then
 		repoNginx = "https://nginx.org/packages/ubuntu"
@@ -146,67 +204,85 @@ getnginxsource()
 		repoNginx = "https://nginx.org/packages/debian/"
 		repoLinux = "https://sgp1.digitalocean.com/debian"
 	fi
-###---------------------------------------------------------------------###
-### Choose Ubuntu or Debian, run Review, fill table below, decide  	    ###
-### your distro, target build, repo, check module, then compile.  	    ###
-###---------------------------------------------------------------------###
-### 		Ubuntu 16.04 LTS Xenial					                    ###
-### Ubuntu Repo		: nginx 1.10.3-0ubuntu0.16.04.2		                ###
-### PPA Repo		: nginx 1.13.4				   	                    ###
-### Nginx Repo		: nginx 1.12.1				   	                    ###
-### 		Ubuntu 16.10 Yaketty					                    ###
-### Ubuntu Repo	 	: nginx 1.10.1-0ubuntu1.3		   	                ###
-### PPA Repo	 	: 						                            ###
-### Nginx Repo	 	:			         		                        ###
-###---------------------------------------------------------------------###
-### 		Debian 8 Jessie                                       	    ###
-### Debian Repo		: nginx (1.6.2-5+deb8u5)			                ###
-### 		Debian 8 Jessie Backports                              	    ###
-### Debian Repo		: nginx (1.10.3-1+deb9u1~bpo8+2)	                ###
-### 		Debian 9 Stretch                                            ###
-### Debian Repo 	: nginx (1.10.3-1+deb9u1)			                ###
-###			Debian 9 stretch Backports                 	                ###
-### Debian Repo		: nginx (1.13.3-1~bpo9+1)		                    ###
-### PPA Repo		: nginx 1.13.4				   	                    ###
-### Nginx Repo		:                                         	        ###
-###---------------------------------------------------------------------###
-### APT Repository						 	                            ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
-	if [ "${doGetapt}" != "0" ];
-	then
-		wget -N https://nginx.org/keys/nginx_signing.key
-		apt-key add nginx_signing.key
-		rm nginx_signing.key
-		cd ${buildDir}
-		if [ "${useRepolinux}" != "0" ];
-		then
-			add-apt-repository -s -y "deb ${repoLinux} ${ubuntuVer} nginx"
-			add-apt-repository -s -y "deb-src ${repoLinux} ${ubuntuVer} nginx"
-		fi
-		if [ "${useReponginx}" != "0" ];
-		then
-			add-apt-repository -s -y "deb ${repoNginx} ${ubuntuVer} nginx"
-			add-apt-repository -s -y "deb-src ${repoNginx} ${ubuntuVer} nginx"
-		fi
-		if [ "${useRepoppasta}" != "0" ];
-		then
-			add-apt-repository -s -y ppa:nginx/stable
-		fi
-		if [ "${useRepoppadev}" != "0" ];
-		then
-		add-apt-repository -s -y ppa:nginx/development
-		fi
-		apt-get update
-		apt-get upgrade
-		###-----> Troubleshooting package missing stuff		            ###
-		#apt-get install software-properties-common phyton-software-properties 
-	fi
-###                                                               	    ###
-###---------------------------------------------------------------------###
 }
-###########################################################################
+###                                         	                      	    ###
+###############################################################################
+
+
+###############################################################################
+### prepareOnce()						                 	            	###
+### one time preparation, dhparam took long time            	         	###
+###-------------------------------------------------------------------------###
+###                                                               		    ###
+prepareOnce()	{
+###-------------------------------------------------------------------------###
+### Check and Set Nginx User							                    ###
+###-------------------------------------------------------------------------###
+    local nginxUserExists=$(id -u www-data > /dev/null 2>&1; echo $?)
+    if [ "${nginxUserExists}" != "0" ];
+    then
+	useradd -d /etc/nginx -s /bin/false nginx
+    fi
+###-------------------------------------------------------------------------###
+### Generate DHParam for Nginx OpemSSL      	        					###
+###-------------------------------------------------------------------------###
+    if [ "${doDhparam}" != "0" ];
+    then
+	    openssl dhparam -out ${dhparamFile} ${dhparamBits}
+    fi
+###                                                     	          	    ###
+###-------------------------------------------------------------------------###
+}
+###                                                         	      	    ###
+###############################################################################
+
+
+###############################################################################
+### aptnginx()											               		###
+### Nginx repo management                                          	  	    ###
+###-------------------------------------------------------------------------###
+###                                                               		    ###
+aptnginx()	{
+	wget -N https://nginx.org/keys/nginx_signing.key
+	apt-key add nginx_signing.key
+	rm nginx_signing.key
+	
+	case "$1" in 
+		addrepoLinux)
+				add-apt-repository -s -y -u "deb ${repoLinux} ${ubuntuVer}-nginx" ;;
+	addrepoBackports)
+				add-apt-repository -s -y -u "deb ${repoLinux} ${ubuntuVer}-backports nginx" ;;
+		addrepoNginx)
+				add-apt-repository -s -y -u "deb ${repoNginx} ${ubuntuVer} nginx" ;;
+       addrepoPpasta)
+				add-apt-repository -s -y -u ppa:nginx/stable ;;
+	   addrepoPpadev)
+				add-apt-repository -s -y -u ppa:nginx/development ;;
+ 	   addrepoReview)
+				add-apt-repository -y "deb ${repoLinux} ${ubuntuVer} nginx" \
+				&& add-apt-repository -y "deb ${repoLinux} ${ubuntuVer}-backports nginx" \
+				&& add-apt-repository -y "deb ${repoNginx} ${ubuntuVer} nginx" \
+				&& add-apt-repository -y ppa:nginx/stable \
+				&& add-apt-repository -y ppa:nginx/development \
+				&& apt-get update \	
+				&& apt-cache search nginx
+				echo "Remove the repo using -
+				exit 1 ;;
+		  delrepoAll)
+				add-apt-repository -r -y "deb ${repoLinux} ${ubuntuVer} nginx" \
+				&& add-apt-repository -r -y "deb ${repoLinux} ${ubuntuVer}-backports nginx" \
+				&& add-apt-repository -r -y "deb ${repoNginx} ${ubuntuVer} nginx" \
+				&& add-apt-repository -r -y ppa:nginx/stable \
+				&& add-apt-repository -r -y ppa:nginx/development \
+				&& apt-get update	;;
+	esac		  
+###                                                               		    ###
+###-----> Troubleshooting package missing stuff		           				###
+	#apt-get install software-properties-common phyton-software-properties 
+	fi
+}
+###                                                               		    ###
+###############################################################################
 
 
 
@@ -426,7 +502,13 @@ cleanupRepo()
 ###---------------------------------------------------------------------###
 ###########################################################################
 
-
+###########################################################################
+### Main program													    ###
+###                                                               	    ###
+###---------------------------------------------------------------------###
+### 															     	###
+### 															 	    ###
+###---------------------------------------------------------------------###
 
 
 
