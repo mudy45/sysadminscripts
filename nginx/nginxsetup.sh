@@ -11,8 +11,10 @@
 ### compile errors. Dynamic modules still not the first choice for now.     ###
 ###                                                                     	###
 ### This script allows easy generation of custom Nginx apt package for      ###
-### GNU Linux. Included modules are:                                     	###
-### PageSpeed, NAXSI, PCRE, OpenSSL,                                     	###
+### GNU Linux (dpkg) that can be installed on another GNU Linux. 			###
+###                                                                      	###
+### Included external modules are:											###
+### PageSpeed + psol, NAXSI, PCRE, OpenSSL, VTS, Brotli                    	###
 ###                                                                      	###
 ###-------------------------------------------------------------------------###
 ###                                                                         ###
@@ -48,11 +50,10 @@ ${buildDir}/sourceset- ${sourceSet). COfiguration in the script.
 -1 | --repo1		Compile using this Linux repo (standard src)
 -0 | --view0		Remove all Nginx repo, view, not compile, not upgrade.
 
--c | --compile		Generic function, do normal compile. If already done
-                	once do fast re-compile.
+-c | --compile		Configure compiled Nginx.
 -f | --fastcomp 	Fast re-compile, not doing dhparam, no apt-get.
 -e | --erase		Erase before compile.
--i | --install		Configure compiled Nginx.
+-i | --intearctive	Interactive, sets of pause and questions
 -r | --remove		Remove newly installed Nginx.
 -u | --uninstall	Uninstall existing web servers.
 -b | --backupset	Backup current source set to compile later.
@@ -116,7 +117,7 @@ Nginx Cache Folder = /var/cache/nginx
 ### Check version : https://www.modpagespeed.com/doc/release_notes			###
 ### Known good	  : 1.12.34.2-stable										###
 			verPagespeed  = "1.12.34.2-stable"
-### Module 		  : Zlib - Compression library								###
+### Module 		  : PCRE - 													###
 ### Check version : https://ftp.pcre.org/pub/pcre/							###
 ### Known good	  : 8.41 													###
 			verPcre      = "8.41"
@@ -133,9 +134,26 @@ Nginx Cache Folder = /var/cache/nginx
 ### Modules Using Latest Github Master Branch (regardless of version)      	###
 ###-------------------------------------------------------------------------###
 ###                                                                 		###
-### Module 		  : 														###
-### Github		  : https://github.com/										###
+### Module 		  : ngx_devel_kit											###
+### Github		  : https://github.com/simpl/ngx_devel_kit.git 				###
 ###                                                                 		###
+### Module 		  : headers-more-nginx-module								###
+### Github		  : https://github.com/openresty/headers-more-nginx-module.git	###
+###                                                                 		###
+### Module 		  : set-misc-nginx-module									###
+### Github		  : https://github.com/openresty/set-misc-nginx-module.git	###
+###                                                                 		###
+### Module 		  : nginx-module-vts										###
+### Github		  : https://github.com/vozlt/nginx-module-vts.git 			###
+###                                                                 		###
+### Module 		  : Brotli - brotli.git										###
+### Github		  : https://github.com/google/brotli.git 					###
+###                                                                 		###
+### Module 		  : Brotli - libbrotli										###
+### Github		  : https://github.com/bagder/libbrotli			 			###
+###                                                                 		###
+### Module 		  : Brotli - ngx_brotli										###
+### Github		  : https://github.com/google/ngx_brotli		 			###
 ###                                                                	    	###
 ###############################################################################
 ### Parameters, configurations, and variables                     	    	###
@@ -264,9 +282,10 @@ aptnginx()	{
 				&& add-apt-repository -y "deb ${repoNginx} ${ubuntuVer} nginx" \
 				&& add-apt-repository -y ppa:nginx/stable \
 				&& add-apt-repository -y ppa:nginx/development \
-				&& apt-get update \	
-				&& apt-cache search nginx
-				echo "Remove the repo using -
+				&& apt-get update
+				apt-cache show nginx
+				apt-cache policy nginx
+				echo "Remove the repo using -0"
 				exit 1 ;;
 		  delrepoAll)
 				add-apt-repository -r -y "deb ${repoLinux} ${ubuntuVer} nginx" \
@@ -274,12 +293,11 @@ aptnginx()	{
 				&& add-apt-repository -r -y "deb ${repoNginx} ${ubuntuVer} nginx" \
 				&& add-apt-repository -r -y ppa:nginx/stable \
 				&& add-apt-repository -r -y ppa:nginx/development \
-				&& apt-get update	;;
+				&& apt-get update ;;
 	esac		  
 ###                                                               		    ###
 ###-----> Troubleshooting package missing stuff		           				###
 	#apt-get install software-properties-common phyton-software-properties 
-	fi
 }
 ###                                                               		    ###
 ###############################################################################
@@ -291,14 +309,13 @@ aptnginx()	{
 ###                                                               	    ###
 ###---------------------------------------------------------------------###
 ###                                                                  	###
-getModule()
+getModules()
 {
 ###---------------------------------------------------------------------###
 ### Get Github Modules (development, non-release version)               ###
 ###---------------------------------------------------------------------###
 ###                                                               	    ###
 	cd ${buildDir}
-	git clone https://github.com/nbs-system/naxsi.git 
 	git clone https://github.com/simpl/ngx_devel_kit.git 
 	git clone https://github.com/openresty/headers-more-nginx-module.git 
 	git clone https://github.com/openresty/set-misc-nginx-module.git
@@ -432,9 +449,13 @@ cd ${buildDir}/nginx \
                     --add-module==${buildDir}/ngx_brotli \
                     --add-module==${buildDir}/headers-more-nginx-module \
                     --add-module==${buildDir}/set-misc-nginx-module \
-                    --add-module=${buildDir}/ngx_pagespeed-${pagespeedVers} \
-    && make -j ${cpuCount} \
-    && make install
+                    --add-module=${buildDir}/ngx_pagespeed-${pagespeedVers}
+#    make -j ${cpuCount}
+	cd ${buildDir}/nginx
+	apt-get source nginx
+	apt-get build-dep nginx
+	dpkg-buildpackage -b
+	dpkg-buildpackage -uc -b
 }
 ###                                                                   	###
 ###---------------------------------------------------------------------###
@@ -466,7 +487,10 @@ nginxConfigure()
 ###                                                                   	###
 ###---------------------------------------------------------------------###
 ###########################################################################
-
+dpkg --install nginx_1.11.2-1~xenial_amd64.deb
+apt-mark hold nginx
+dpkg --install nginx-module-geoip_1.11.2-1~xenial_amd64.deb
+apt-mark hold nginx-module-geoip
 
 ###########################################################################
 ### Remove Nginx													    ###
@@ -488,7 +512,7 @@ removeNginx()
 ### There's no need to keep any repo since its only for compiling.     	###
 ### Once package build well, it is save to remove all nginx repo. 	    ###
 ###---------------------------------------------------------------------###
-cleanupRepo()
+cleanup()
 {
     mv ${buildDir}/sourceset-${sourceSet} ${homeDir}
     rm -rf ${buildDir}
@@ -509,8 +533,29 @@ cleanupRepo()
 ### 															     	###
 ### 															 	    ###
 ###---------------------------------------------------------------------###
-
-
+setRepolinux
+prepareOnce
+###---------------------------------------------------------------------###
+### 0 delrepoAll, 1 addrepoLinux, 2 addrepoBackports, 					###
+### 3 addrepoPpasta, 4 addrepoPpadev, 5 addrepoNginx, 9 addrepoReview	###
+case $1 in
+	"-0") aptnginx delrepoAll ;;
+	"-1") aptnginx addrepoLinux ;;
+	"-2") aptnginx addrepoBackports ;;
+	"-3") aptnginx addrepoPpasta ;;
+	"-4") aptnginx addrepoPpadev ;;
+	"-5") aptnginx addrepoNginx ;;
+	"-9") aptnginx addrepoReview ;;
+esac
+###---------------------------------------------------------------------###
+getModules
+processModules
+nginxCompile
+nginxConfigure
+cleanup
+### 															 	    ###
+###---------------------------------------------------------------------###
+###########################################################################
 
 
 ###EOF
