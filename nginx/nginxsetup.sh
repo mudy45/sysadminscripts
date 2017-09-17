@@ -268,26 +268,43 @@ prepareOnce()	{
 
 
 ###############################################################################
-### aptnginx()											               		###
-### Nginx repo management                                          	  	    ###
+### aptNginx()											               		###
+### Nginx repo management, add all nginx repo for review, add chosen repo,  ###
+### add preferences file for selected repo, remove all nginx repo.		    ###
 ###-------------------------------------------------------------------------###
 ###                                                               		    ###
-aptnginx()	{
+aptNginx()	{
 	wget -N https://nginx.org/keys/nginx_signing.key
 	apt-key add nginx_signing.key
 	rm nginx_signing.key
 	
 	case "$1" in 
 		addrepoLinux)
-				add-apt-repository -s -y -u "deb ${repoLinux} ${ubuntuVer}-nginx" ;;
+				add-apt-repository -s -y -u "deb ${repoLinux} ${linuxVer}-nginx" ;;
+				cp ${scriptDir}/src/etc/apt/preferences.d/nginx-linux /etc/apt/preferences.d 
+				apt-get update ;;
+				#-----> add current linux (ubuntu or debian) repo (stable) for nginx
 	addrepoBackports)
-				add-apt-repository -s -y -u "deb ${repoLinux} ${ubuntuVer}-backports nginx" ;;
+				add-apt-repository -s -y -u "deb ${repoLinux} ${linuxVer}-backports nginx" ;;
+				cp ${scriptDir}/src/etc/apt/preferences.d/nginx-linux-backports /etc/apt/preferences.d 
+				apt-get update ;;
+				#-----> add linux-backports (ubuntu or debian) repo for nginx
+				#-----> TODO: catch error when bacports repo not exist
 		addrepoNginx)
 				add-apt-repository -s -y -u "deb ${repoNginx} ${ubuntuVer} nginx" ;;
+				cp ${scriptDir}/src/etc/apt/preferences.d/nginx-repo /etc/apt/preferences.d 
+				apt-get update ;;
+				#-----> add nginx repo (mainline) for current linux (ubuntu or debian)
        addrepoPpasta)
 				add-apt-repository -s -y -u ppa:nginx/stable ;;
+				cp ${scriptDir}/src/etc/apt/preferences.d/nginx-ppa-stable /etc/apt/preferences.d 
+				apt-get update ;;
+				#-----> add ppa repo stable for nginx
 	   addrepoPpadev)
-				add-apt-repository -s -y -u ppa:nginx/development ;;
+				add-apt-repository -s -y ppa:nginx/development 
+				cp ${scriptDir}/src/etc/apt/preferences.d/nginx-ppa-development /etc/apt/preferences.d 
+				apt-get update ;;
+				#-----> add ppa repo development (mainline) for nginx
  	   addrepoReview)
 				add-apt-repository -y "deb ${repoLinux} ${ubuntuVer} nginx" \
 				&& add-apt-repository -y "deb ${repoLinux} ${ubuntuVer}-backports nginx" \
@@ -297,36 +314,64 @@ aptnginx()	{
 				&& apt-get update
 				apt-cache show nginx
 				apt-cache policy nginx
-				echo "Remove the repo using -0"
+				echo "Remove Nginx repos using -0"
 				exit 1 ;;
+				#-----> exit to review all nginx repo version policy
 		  delrepoAll)
 				add-apt-repository -r -y "deb ${repoLinux} ${ubuntuVer} nginx" \
 				&& add-apt-repository -r -y "deb ${repoLinux} ${ubuntuVer}-backports nginx" \
 				&& add-apt-repository -r -y "deb ${repoNginx} ${ubuntuVer} nginx" \
 				&& add-apt-repository -r -y ppa:nginx/stable \
-				&& add-apt-repository -r -y ppa:nginx/development \
-				&& apt-get update ;;
+				&& add-apt-repository -r -y ppa:nginx/development
+				rm /etc/apt/preferences.d/nginx*
+				apt-get update ;;
+				#-----> remove all nginx repo
 	esac		  
 ###                                                               		    ###
 ###-----> Troubleshooting package missing stuff		           				###
 	#apt-get install software-properties-common phyton-software-properties 
 }
+
+###-------------------------------------------------------------------------###
+### getGitsrc()												    	    	###
+### Get git source, not using repository, delete all nginx* folder  		###
+###-------------------------------------------------------------------------###
+getGitsrc()	{
+	cd ${buildDir}
+	rm nginx*
+	case "$1" in
+		gitdebian)
+					git clone https://anonscm.debian.org/cgit/pkg-nginx/nginx.git ;;
+		 gitnginx)
+					git clone https://github.com/nginx/nginx ;;
+	esac
+}
+###-------------------------------------------------------------------------###
+### getAptsrc()												    	    	###
+### Get git source, not using repository, delete all nginx* folder  		###
+###-------------------------------------------------------------------------###
+getAptsrc()	{
+	cd ${buildDir}
+	rm nginx*
+	apt-get source nginx
+}
+
 ###                                                               		    ###
 ###############################################################################
 
 
 
-###########################################################################
-### Download Modules										    	    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-###                                                                  	###
+###############################################################################
+### Download Modules										    	   		###
+###		                                                               	    ###
+###-------------------------------------------------------------------------###
+###                                                                  		###
 getModules()
 {
-###---------------------------------------------------------------------###
-### Get Github Modules (development, non-release version)               ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
+###-------------------------------------------------------------------------###
+### Get Github Modules (development, non-release version)              		###
+###-------------------------------------------------------------------------###
+###                                                               		    ###
 	cd ${buildDir}
 	git clone https://github.com/simpl/ngx_devel_kit.git 
 	git clone https://github.com/openresty/headers-more-nginx-module.git 
@@ -335,47 +380,47 @@ getModules()
 	git clone https://github.com/google/brotli.git 
 	git clone https://github.com/bagder/libbrotli 	
 	git clone https://github.com/google/ngx_brotli 
-###---------------------------------------------------------------------###
-### Get Release Version,  										    	###
-### Pagespeed, OpenSSL, PCRE, Zlib                                 	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
+###-------------------------------------------------------------------------###
+### Get Release Version,  										    		###
+### Pagespeed, OpenSSL, PCRE, Zlib                                 	    	###
+###-------------------------------------------------------------------------###
+###         	                                                      	    ###
     cd ${buildDir}/sourceset-${sourceSet}
     wget -N https://github.com/pagespeed/ngx_pagespeed/archive/v${verPagespeed}.zip
     wget -N https://www.openssl.org/source/openssl-${openSslVers}.tar.gz
 	wget -N https://ftp.pcre.org/pub/pcre/pcre-${pcreVers}.tar.gz
 	wget -N http://www.zlib.net/zlib-${zlibVers}.tar.gz 
     wget -N https://github.com/nbs-system/naxsi/archive/${verNaxsi}.tar.gz
-###---------------------------------------------------------------------###
-### Download and decompress modules									    ###
-### PCRE, OpenSSL, ZLib, Pagespeed, Naxsi                         	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
+###-------------------------------------------------------------------------###
+### Download and decompress modules										    ###
+### PCRE, OpenSSL, ZLib, Pagespeed, Naxsi	                         	    ###
+###-------------------------------------------------------------------------###
+###                                             	                  	    ###
 	cd ${buildDir}/sourceset-${sourceSet}
 	tar xvf openssl-${verOpenssl}.tar.gz --strip-components=1 -C ${buildDir}/packages/openssl
 	tar xvf pcre-${verPcre}.tar.gz --strip-components=1 -C ${buildDir}/packages/pcre
 	tar xvf zlib-${verZlib}.tar.gz --strip-components=1 -C ${buildDir}/packages/zlib
 	tar xvf zlib-${verNaxsi}.tar.gz --strip-components=1 -C ${buildDir}/packages/naxsi
     unzip -o v${verPagespeed}.zip -d ${buildDir}
-###                                                               	    ###
-###---------------------------------------------------------------------###
+###                                                 	              	    ###
+###-------------------------------------------------------------------------###
 }
-###                                                               	    ###
-###########################################################################
+###                                                         	      	    ###
+###############################################################################
 
 
-###########################################################################
-### Process Modules  										    	    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-###                                                                  	###
+###############################################################################
+### Process Modules  										    	    	###
+###                                                               	    	###
+###-------------------------------------------------------------------------###
+###                                                                  		###
 processModules()
 {
-###---------------------------------------------------------------------###
-### Process and prepare modules									        ###
-### Compile Brotli Module                                         	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
+###-------------------------------------------------------------------------###
+### Process and prepare modules									        	###
+### Compile Brotli Module                                         	    	###
+###-------------------------------------------------------------------------###
+###                                                               	    	###
     cd ${buildDir}/brotli \
     python setup.py install
     cd ${buildDir}/libbrotli \
@@ -385,28 +430,28 @@ processModules()
     make install
     cd ${buildDir}/ngx_brotli
     git submodule update --init
-###---------------------------------------------------------------------###
-### Download and decompress modules									    ###
-### Compile Pagespeed and PSOL Module                            	    ###
-###---------------------------------------------------------------------###
-###                                                               	    ###
+###-------------------------------------------------------------------------###
+### Download and decompress modules										    ###
+### Compile Pagespeed and PSOL Module   	                         	    ###
+###-------------------------------------------------------------------------###
+###                                             	                  	    ###
     cd ${buildDir}/
     cd ngx_pagespeed-${verPagespeed}
     export psol_url=https://dl.google.com/dl/page-speed/psol/${verPsol}.tar.gz
     [ -e scripts/format_binary_url.sh ] && psol_url=$(scripts/format_binary_url.sh PSOL_BINARY_URL)
     wget ${psol_url}
     tar -xzvf $(basename ${psol_url})
-###                                                               	    ###
-###---------------------------------------------------------------------###
+###                                                 	              	    ###
+###-------------------------------------------------------------------------###
 }
-###                                                               	    ###
-###########################################################################
+###                                                         	      	    ###
+###############################################################################
 
 
-###########################################################################
-### Compile Nginx    													###
-###                                                                   	###
-###---------------------------------------------------------------------###
+###############################################################################
+### Compile Nginx    														###
+###                                                                   		###
+###-------------------------------------------------------------------------###
 nginxCompile()
 {
 cd ${buildDir}/nginx \
@@ -469,16 +514,16 @@ cd ${buildDir}/nginx \
 	dpkg-buildpackage -b
 	dpkg-buildpackage -uc -b
 }
-###                                                                   	###
-###---------------------------------------------------------------------###
-###########################################################################
+###                                                                   		###
+###-------------------------------------------------------------------------###
+###############################################################################
 
 
-###########################################################################
-### Configure Nginx			     										###
-###                                                                  	###
-###---------------------------------------------------------------------###
-###                                                                  	###
+###############################################################################
+### Configure Nginx			     											###
+###                                                                  		###
+###-------------------------------------------------------------------------###
+###                                                                  		###
 nginxConfigure()
 {
 	rm -rf /etc/nginx/config/*.default
@@ -496,78 +541,90 @@ nginxConfigure()
     systemctl enable nginx
     systemctl start nginx
 }
-###                                                                   	###
-###---------------------------------------------------------------------###
-###########################################################################
+###                                                                   		###
+###-------------------------------------------------------------------------###
+###############################################################################
 dpkg --install nginx_1.11.2-1~xenial_amd64.deb
 apt-mark hold nginx
 dpkg --install nginx-module-geoip_1.11.2-1~xenial_amd64.deb
 apt-mark hold nginx-module-geoip
 
-###########################################################################
-### Remove Nginx													    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-removeNginx()
-{
+###############################################################################
+### Remove Nginx													  	 	###
+###                                                               	    	###
+###-------------------------------------------------------------------------###
+removeNginx()	{
 	apt-get -y remove nginx
 	apt-get -y purge nginx
 }
-###                                                                   	###
-###---------------------------------------------------------------------###
-###########################################################################
+###                                                                   		###
+###-------------------------------------------------------------------------###
+###############################################################################
 
-###########################################################################
-### Cleanup - Remove all repository									    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-### There's no need to keep any repo since its only for compiling.     	###
-### Once package build well, it is save to remove all nginx repo. 	    ###
-###---------------------------------------------------------------------###
-cleanup()
-{
+###############################################################################
+### Cleanup - Remove all repository									    	###
+###                                                               	    	###
+###-------------------------------------------------------------------------###
+### There's no need to keep any repo since its only for compiling.     		###
+### Once package build well, it is save to remove all nginx repo. 	    	###
+###-------------------------------------------------------------------------###
+cleanup()	{
     mv ${buildDir}/sourceset-${sourceSet} ${homeDir}
     rm -rf ${buildDir}
-    add-apt-repository -r -y "deb ${repoNginx} ${ubuntuVer} nginx"
-	add-apt-repository -r -y "deb-src ${repoNginx} ${ubuntuVer} nginx"
+    add-apt-repository -r -y "deb ${repoNginx} ${linuxVer} nginx"
+	add-apt-repository -r -y "deb-src ${repoNginx} ${linuxVer} nginx"
 	add-apt-repository -r -y ppa:nginx/stable
 	add-apt-repository -r -y ppa:nginx/development
+	rm /etc/apt/preferences.d/nginx*
 	apt-get update
 }
-###                                                                   	###
-###---------------------------------------------------------------------###
-###########################################################################
+###                                                                   		###
+###-------------------------------------------------------------------------###
+###############################################################################
 
-###########################################################################
-### Main program													    ###
-###                                                               	    ###
-###---------------------------------------------------------------------###
-### 															     	###
-### 															 	    ###
-###---------------------------------------------------------------------###
+###############################################################################
+### Main program													    	###
+###                                                               	    	###
+###-------------------------------------------------------------------------###
+### 															     		###
+### 															 	    	###
+###-------------------------------------------------------------------------###
 setRepolinux
 prepareOnce
-###---------------------------------------------------------------------###
-### 0 delrepoAll, 1 addrepoLinux, 2 addrepoBackports, 					###
-### 3 addrepoPpasta, 4 addrepoPpadev, 5 addrepoNginx, 9 addrepoReview	###
+###-------------------------------------------------------------------------###
+### 0 delrepoAll, 1 addrepoLinux, 2 addrepoBackports, 						###
+### 3 addrepoPpasta, 4 addrepoPpadev, 5 addrepoNginx, 6 gitdebian			###
+### 7 gitnginx, 9 addrepoReview												###
 case $1 in
-	"-0") aptnginx delrepoAll ;;
-	"-1") aptnginx addrepoLinux ;;
-	"-2") aptnginx addrepoBackports ;;
-	"-3") aptnginx addrepoPpasta ;;
-	"-4") aptnginx addrepoPpadev ;;
-	"-5") aptnginx addrepoNginx ;;
-	"-9") aptnginx addrepoReview ;;
+	"-0") 	aptNginx delrepoAll
+			apt-cache policy nginx
+			exit 1	;;
+	"-1") 	aptNginx addrepoLinux
+			getAptsrc ;;
+	"-2") 	aptNginx addrepoBackports
+			getAptsrc ;;
+	"-3") 	aptNginx addrepoPpasta
+			getAptsrc ;;
+	"-4") 	aptNginx addrepoPpadev
+			getAptsrc ;;
+	"-5") 	aptNginx addrepoNginx
+			getAptsrc ;;
+	"-6") 	aptNginx delrepoAll
+			getGitsrc gitdebian ;;
+	"-7") 	aptNginx delrepoAll
+			getGitsrc gitnginx ;;
+	"-9") 	aptNginx addrepoReview ;;
+			#-----> always exit to view result.
 esac
-###---------------------------------------------------------------------###
+###-------------------------------------------------------------------------###
 getModules
 processModules
 nginxCompile
 nginxConfigure
 cleanup
-### 															 	    ###
-###---------------------------------------------------------------------###
-###########################################################################
+### 															 	    	###
+###-------------------------------------------------------------------------###
+###############################################################################
 
 
 ###EOF
