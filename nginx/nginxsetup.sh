@@ -70,20 +70,32 @@ Nginx Cache Folder = /var/cache/nginx
 }
 
 ###############################################################################
-### Choose Ubuntu or Debian, run Review, fill table below, decide  	    	###
-### your distro, target build, repo, check module, then compile.  	   		###
+### Choose Ubuntu or Debian, run Review, fill table below, decide your   	###
+### distro, target build, repo, check module, then compile.		  	   		###
+### Last update: 20170917                                              	    ###
 ###-------------------------------------------------------------------------###
 ### http://nginx.org/en/download.html					                	###
-### current stable	: nginx 1.12.1 & 1.13.3				               		###
+### Nginx Mainline	: 1.13.5							               		###
+### Nginx Stable	: 1.12.1							               		###
+###-------------------------------------------------------------------------###
+###	Debian GIT		: https://anonscm.debian.org/cgit/pkg-nginx/nginx.git   ###
+###					: 1.13.5 (20170905)                               	    ###
+###					  Add RTMP video streaming server                  	    ###
+###-------------------------------------------------------------------------###
+###		    Ubuntu                                                     	    ###
 ###-------------------------------------------------------------------------###
 ### 		Ubuntu 16.04 LTS Xenial					           		        ###
 ### Ubuntu Repo		: nginx 1.10.3-0ubuntu0.16.04.2		       	    	    ###
-### PPA Repo		: nginx 1.13.4				   	        	            ###
+### PPA Dev Repo	: nginx 1.13.3-0+xenial1	   	        	            ###
+### PPA Stab Repo	: nginx 1.12.1				   	        	            ###
 ### Nginx Repo		: nginx 1.12.1				   	    	                ###
 ### 		Ubuntu 16.10 Yaketty						                    ###
 ### Ubuntu Repo	 	: nginx 1.10.1-0ubuntu1.3			   	                ###
-### PPA Repo	 	: 							                            ###
+### PPA Dev Repo 	: 							                            ###
+### PPA Stab Repo 	: 							                            ###
 ### Nginx Repo	 	:				         		                        ###
+###-------------------------------------------------------------------------###
+###		    Debian                                                     	    ###
 ###-------------------------------------------------------------------------###
 ### 		Debian 8 Jessie                                       	    	###
 ### Debian Repo		: nginx (1.6.2-5+deb8u5)			            	    ###
