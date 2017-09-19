@@ -1,5 +1,37 @@
 #!/usr/bin/env bash
-
+###############################################################################
+###                                                               	        ###
+###                   LAZYSERVERADMIN / LAZYADMINSETUP.SH 	         	    ###
+###                             by mudy45@github                            ###
+###                                                                 	    ###
+### One hand production server installation. Gamers friendly. Support multi ###
+### tasking (installing while watching movie). Requirement: reclining seat, ###
+### wireless keyboard, secondary LCD to browse.                            	###
+###                                                                        	###
+###-------------------------------------------------------------------------###
+###                                                                        	###
+### Op System		: Ubuntu 16.04.03 Xenial LTS                            ###
+### RDBMS			: MariaDB 10.1                                          ###
+### Web Server		: Nginx 1.10, 1.12, 1.13, custom		                ###
+### PHP Server		: PHP 7                                                	###
+### JS Server		: Node.JS                                              	###
+### NoSQL Server	:                                                     	###
+### Monitoring		: Munin, Nagios											###
+### Security		: CFS, Clamav                                         	###
+### CMS				: Wordpress                                           	###
+###                                                                        	###
+###-------------------------------------------------------------------------###
+###                                                                         ###
+### License	    : GNU General Public License version 3        	            ###
+### Copyright   : Mudy Situmorang (mudy45@gmail.com)                        ###
+### Tested OS	: Ubuntu 16.04.3 LTS Xenial                                 ###
+### Github      : https://github.com/mudy45/sysadminscripts    	            ###
+### Version     : 0.1 alpha --> WARNING: DO NOT USE !!!!                    ###
+### File        : /lazyadminsetup.sh		                                ###
+### Release		: Not Available                                             ###
+### Update      : 20170920                                                  ###
+###                                                                         ###
+###############################################################################
 swappinessNum = "30"
 ###----> Create swap 2x RAM
 swapSize = "1024k"
