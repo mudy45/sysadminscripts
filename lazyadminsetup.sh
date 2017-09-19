@@ -11,6 +11,9 @@ ubuntuKeyserver = "0xF1656F24C74CD1D8"
 linuxCodename = "xenial"
 linuxDistro = "ubuntu"
 verMariadb = "10.1"
+mariadbRootpass = openssl rand -base64 12
+mariadbSu = "mysqlsu"
+mariadbRootpass = openssl rand -base64 12
 
 ###----> Functions
 Fwaitfor()	{
@@ -58,14 +61,37 @@ Fwaitfor
 ###----> Install other apps
 apt-get install mc
 
-###----> Install MariaDB at version
+###----> Install MariaDB at version, no need to enter root password
 apt-key adv --recv-keys --keyserver hkp://keyserver.ubuntu.com:80 ${ubuntuKeyserver}
 add-apt-repository -u 'deb [arch=amd64] http://${mirrorRepo}/mariadb/repo/${verMariadb}/${linuxDistro} ${linuxCodename} main'
 apt-cache policy mariadb-server
 Fwaitfor
 apt-get -y install mariadb-server
+###----> password entered will be replaced by generated mysqlRootpass
 mysql_secure_installation
+mysql -uroot -bse "SET PASSWORD FOR root@localhost=PASSWORD('');
+
+mysql -uroot -bse "ALTER USER 'root'@'localhost' IDENTIFIED BY '${mysqlRootpass}';"
+###----> Create root/.my.cnf
+echo "#
+[client]
+user=root
+pass=${mysqlRootpass}" > /root/.my.cnf
+###----> Create ~/.my.cnf and root/.my.cnf
+echo "#
+[client]
+user=${mysqlSu}
+pass=${mysqlSupass}" > /home/${mysqlSu}/.my.cnf
 systemctl status mysql
+echo "Password on /root/.my.cnf and /home/${mysqlSu}/.my.cnf"
+echo "Use ${mysqlSu} instead of root"
+
+
+mysql_config_editor set --login-path=client --user=${mysqlSu} --password --host=localhost
+
+###-----> Optimize MariaDB
+
+
 
 ###----> Install Nginx
 
