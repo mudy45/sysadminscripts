@@ -30,46 +30,7 @@
 ###############################################################################
 
 ###############################################################################
-### help()                                                             	    ###
-### show usage info                                                    	    ###
-###-------------------------------------------------------------------------###
-###                                                                  	    ###
-help() {
-	[[ -n ${1} ]] && echo -e "** ${1}\n"
-  	cat <<EOU
-Compile Custom Nginx on ${buildDir}, save downloaded packages on 
-${buildDir}/sourceset- ${sourceSet). COfiguration in the script.
--h | --help     	This message.
--9 | --view9		View all repo, add all repository then show available
-					Nginx version. Usefull to decide which one to use.
-					Remove added repo using -0.
--5 | --repo4		Compile using Nginx repo
--4 | --repo3		Compile using PPA stable repo
--3 | --repo3		Compile using PPA stable repo
--2 | --repo2		Compile using this backports repo
--1 | --repo1		Compile using this Linux repo (standard src)
--0 | --view0		Remove all Nginx repo, view, not compile, not upgrade.
-
--c | --compile		Configure compiled Nginx.
--f | --fastcomp 	Fast re-compile, not doing dhparam, no apt-get.
--e | --erase		Erase before compile.
--i | --intearctive	Interactive, sets of pause and questions
--r | --remove		Remove newly installed Nginx.
--u | --uninstall	Uninstall existing web servers.
--b | --backupset	Backup current source set to compile later.
--s | --compileset	Compile an existing backup set
-
-Setup folder:                                                 	  
-Nginx User & Group = www-data				                      
-Nginx HTTP Folder  = /var/www                                  	  
-Nginx Log Folder   = /var/log/nginx                           	  
-Nginx Cache Folder = /var/cache/nginx                         	  
-
-	EOU
- 	exit
-}
-
-###############################################################################
+### Review Nginx Version and Modules                                        ###
 ### Choose Ubuntu or Debian, run Review, fill table below, decide your   	###
 ### distro, target build, repo, check module, then compile.		  	   		###
 ### Last update: 20170917                                              	    ###
@@ -109,9 +70,9 @@ Nginx Cache Folder = /var/cache/nginx
 ### Nginx Repo		:                                        	 	        ###
 ###-------------------------------------------------------------------------###
 ###		                                                               	    ###
-#---> TODO: function to automate distro name loading run here                                                             		
-			doLinux       = "Ubuntu"       # Ubuntu or Debian
-			linuxVer      = "xenial"       # Release Name
+#---> TODO: function to automate distro and code name loading run here                                                             		
+			linuxDistro		= "Ubuntu"       # Ubuntu or Debian
+			linuxCodename  	= "xenial"       # Release Name
 ###		                                                               	    ###
 ###-------------------------------------------------------------------------###
 ### Module Versions                       									###
@@ -145,25 +106,18 @@ Nginx Cache Folder = /var/cache/nginx
 ###-------------------------------------------------------------------------###
 ### Modules Using Latest Github Master Branch (regardless of version)      	###
 ###-------------------------------------------------------------------------###
-###                                                                 		###
 ### Module 		  : ngx_devel_kit											###
 ### Github		  : https://github.com/simpl/ngx_devel_kit.git 				###
-###                                                                 		###
 ### Module 		  : headers-more-nginx-module								###
 ### Github		  : https://github.com/openresty/headers-more-nginx-module.git	###
-###                                                                 		###
 ### Module 		  : set-misc-nginx-module									###
 ### Github		  : https://github.com/openresty/set-misc-nginx-module.git	###
-###                                                                 		###
 ### Module 		  : nginx-module-vts										###
 ### Github		  : https://github.com/vozlt/nginx-module-vts.git 			###
-###                                                                 		###
 ### Module 		  : Brotli - brotli.git										###
 ### Github		  : https://github.com/google/brotli.git 					###
-###                                                                 		###
 ### Module 		  : Brotli - libbrotli										###
 ### Github		  : https://github.com/bagder/libbrotli			 			###
-###                                                                 		###
 ### Module 		  : Brotli - ngx_brotli										###
 ### Github		  : https://github.com/google/ngx_brotli		 			###
 ###                                                                	    	###
@@ -219,13 +173,12 @@ fi
 ### End of params & configs                   	                      	    ###
 ###############################################################################
 
-
 ###############################################################################
-### setRepolinux()	             							             	###
+### Fsetrepolinux()	             							             	###
 ### using repo Ubuntu or Debian		                                       	###
 ###-------------------------------------------------------------------------###
 ###                                     	                          	    ###
-setRepolinux()	{
+Fsetrepolinux()	{
 	if [ "${doLinux}" != "Ubuntu" ];
 	then
 		repoNginx = "https://nginx.org/packages/ubuntu"
@@ -240,23 +193,74 @@ setRepolinux()	{
 
 
 ###############################################################################
-### prepareOnce()						                 	            	###
+### Fhelp()		                                                      	    ###
+### show help and usage info                                                    	    ###
+###-------------------------------------------------------------------------###
+###                                                                  	    ###
+### 0 delrepoAll, 1 addrepoLinux, 2 addrepoBackports, 						###
+### 3 addrepoPpasta, 4 addrepoPpadev, 5 addrepoNginx, 6 gitdebian			###
+### 7 gitnginx, 9 addrepoReview												###
+###                                                                  	    ###
+Fhelp()	{
+  	cat << EOU
+${0} [-options]
+Compile Custom Nginx on ${buildDir}, save downloaded packages on 
+${buildDir}/sourceset-${sourceSet). COfiguration in the script.
+-h | --help     	This message.
+-9 | --allrepo		View all repo, add all repository, show available
+					version and exit. Usefull to decide which one to use.
+					Remove added repo using -0.
+-7 | --gitngx		Set source from Nginx Git
+-6 | --gitdeb		Set source from Debian Git					
+-5 | --repongx		Set Nginx repo
+-4 | --repodev		Set PPA development repo
+-3 | --reposta		Set PPA stable repo
+-2 | --repobck		Set backports repo
+-1 | --repolinux	Set Linux Nginx repo
+-0 | --resetrepo	Reset repo to distro's default, remove all nginx repo
+If multiple repo selected, last repo will be chosen.
+
+-c | --compile		Compile package
+-u | --uninstall	Uninstall existing web servers
+-e | --erase		Erase before compile
+-i | --install		Install & configure after compile
+-d | --dry-run		Simulate, dry run only
+-p | --pause		Interactive, sets of pause and questions
+-b | --backupset	Backup current source set to compile later
+-l | --listset		List backup source set
+-g | --gendhparam	Generate dhparam
+-s num | --selectset num	Mark backup source set num to use
+
+Setup folder:                                                 	  
+Nginx User & Group 	= www-data				                      
+Nginx HTTP Folder  	= /var/www                                  	  
+Nginx Log Folder   	= /var/log/nginx                           	  
+Nginx Cache Folder 	= /var/cache/nginx
+Backup source set	= /root/backup/nginx/sourceset-{$num}"
+	EOU
+ 	exit
+}
+
+
+
+###############################################################################
+### Fprepareonce()						                 	            	###
 ### one time preparation, dhparam took long time            	         	###
 ###-------------------------------------------------------------------------###
 ###                                                               		    ###
-prepareOnce()	{
+Fprepareonce()	{
 ###-------------------------------------------------------------------------###
 ### Check and Set Nginx User							                    ###
 ###-------------------------------------------------------------------------###
     local nginxUserExists=$(id -u www-data > /dev/null 2>&1; echo $?)
-    if [ "${nginxUserExists}" != "0" ];
+    if [[ -z "${nginxUserExists}" ]];
     then
 	useradd -d /etc/nginx -s /bin/false nginx
     fi
 ###-------------------------------------------------------------------------###
 ### Generate DHParam for Nginx OpemSSL      	        					###
 ###-------------------------------------------------------------------------###
-    if [ "${doDhparam}" != "0" ];
+    if [[ "${doDhparam}" ]];
     then
 	    openssl dhparam -out ${dhparamFile} ${dhparamBits}
     fi
@@ -268,12 +272,12 @@ prepareOnce()	{
 
 
 ###############################################################################
-### aptNginx()											               		###
+### Faptnginx()											               		###
 ### Nginx repo management, add all nginx repo for review, add chosen repo,  ###
 ### add preferences file for selected repo, remove all nginx repo.		    ###
 ###-------------------------------------------------------------------------###
 ###                                                               		    ###
-aptNginx()	{
+Faptnginx()	{
 	wget -N https://nginx.org/keys/nginx_signing.key
 	apt-key add nginx_signing.key
 	rm nginx_signing.key
@@ -589,6 +593,26 @@ cleanup()	{
 ### 															     		###
 ### 															 	    	###
 ###-------------------------------------------------------------------------###
+if [[ $(whoami) != 'root']] && echo -e "Must be root to run $0\n"; then Fhelp; fi
+
+while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
+  case "$1" in
+    -d|--debug)
+              # "-d" or "--debug" parameter?
+              DEBUG=1
+              ;;
+    -c|--conf)
+              CONFFILE="$2"
+              shift
+              if [ ! -f $CONFFILE ]; then
+                echo "Error: Supplied file doesn't exist!"
+                exit $E_CONFFILE     # File not found error.
+              fi
+              ;;
+  esac
+  shift       # Check next set of parameters.
+done
+
 setRepolinux
 prepareOnce
 ###-------------------------------------------------------------------------###
