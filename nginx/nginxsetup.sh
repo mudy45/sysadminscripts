@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 ###############################################################################
 ###                                                               	        ###
-###                    SYSADMINUBUNTU / NGINXSETUP.SH    	         	    ###
-###                              by mudy45@github                           ###
+###                   LAZYSERVERADMIN / NGINXSETUP.SH	 	         	    ###
+###                             by mudy45@github                            ###
 ###                                                                 	    ###
 ###                                                                     	###
-### Maintaining a proper production Nginx webserver will be easier and   	###
+### Maintaining a proper Nginx production webserver will be easier and   	###
 ### fun with this script. The technology develop so fast, adds so many      ###
 ### point of failure, some force sysadmin to recompile, other causing 	    ###
 ### compile errors. Dynamic modules still not the first choice for now.     ###
