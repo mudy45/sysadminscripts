@@ -65,8 +65,10 @@ apt-cache policy mariadb-server
 Fwaitfor
 apt-get -y install mariadb-server
 mysql_secure_installation
+systemctl status mysql
 
 ###----> Install Nginx
+
 
 ###----> Install PHP
 
