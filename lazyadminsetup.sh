@@ -32,16 +32,53 @@
 ### Update      : 20170920                                                  ###
 ###                                                                         ###
 ###############################################################################
+
+#if [ $(whoami) != 'root' ]; then
+#        echo "Must be root to run $0"
+#        exit 1;
+#fi
+#[[ -n ${1} ]] && echo -e "lazyadminsetup.sh ${1}\n"
+
+
+###############################################################################
+### Main                                                             	    ###
+### show usage info                                                    	    ###
+###-------------------------------------------------------------------------###
+###                                                                  	    ###
+if [[ $(whoami) != 'root' ]] && echo -e "Must be root to run ${0}\n"; then Fhelp; exit; fi
+
+case "${1}" in
+	"-h"|"--help"	)
+
+###############################################################################
+### helper functions                                                   	    ###
+### Fhelp, Fwaitfor                                                   	    ###
+###-------------------------------------------------------------------------###
+###                                                                  	    ###
+Fhelp()	{
+	cat << EOU
+	Setup Ubuntu server right after install, 
+	-h | --help     	This message.
+
+	EOU
+	exit
+}
+
+Fwaitfor()	{
+	read -rsp -t5 'Press Ctrl-C to abort script...' key
+}
+
+###############################################################################
+### Variable                                                           	    ###
+### 			                                                    	    ###
+###-------------------------------------------------------------------------###
+###                                                                  	    ###
+
 swappinessNum = "30"
 ###----> Create swap 2x RAM
 swapSize = "1024k"
 ###----> Change this SSH port number
 customSshport = "22222"
-
-###----> Functions
-Fwaitfor()	{
-	read -rsp -t5 'Press Ctrl-C to abort script...' key
-}
 
 ###----> Update server time
 timedatectl set-timezone Asia/Jakarta
