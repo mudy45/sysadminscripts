@@ -337,10 +337,10 @@ Faptnginx()	{
 }
 
 ###-------------------------------------------------------------------------###
-### getGitsrc()												    	    	###
+### Fgetgitsrc()											    	    	###
 ### Get git source, not using repository, delete all nginx* folder  		###
 ###-------------------------------------------------------------------------###
-getGitsrc()	{
+FgetGitsrc()	{
 	cd ${buildDir}
 	rm nginx*
 	case "$1" in
@@ -351,10 +351,10 @@ getGitsrc()	{
 	esac
 }
 ###-------------------------------------------------------------------------###
-### getAptsrc()												    	    	###
+### Fgetaptsrc()												    	    	###
 ### Get git source, not using repository, delete all nginx* folder  		###
 ###-------------------------------------------------------------------------###
-getAptsrc()	{
+Fgetaptsrc()	{
 	cd ${buildDir}
 	rm nginx*
 	apt-get source nginx
@@ -366,11 +366,11 @@ getAptsrc()	{
 
 
 ###############################################################################
-### Download Modules										    	   		###
-###		                                                               	    ###
+### Fgetmodules		 										    	   		###
+###	Download Modules                                                  	    ###
 ###-------------------------------------------------------------------------###
 ###                                                                  		###
-getModules()
+Fgetmodules()
 {
 ###-------------------------------------------------------------------------###
 ### Get Github Modules (development, non-release version)              		###
@@ -391,9 +391,9 @@ getModules()
 ###         	                                                      	    ###
     cd ${buildDir}/sourceset-${sourceSet}
     wget -N https://github.com/pagespeed/ngx_pagespeed/archive/v${verPagespeed}.zip
-    wget -N https://www.openssl.org/source/openssl-${openSslVers}.tar.gz
-	wget -N https://ftp.pcre.org/pub/pcre/pcre-${pcreVers}.tar.gz
-	wget -N http://www.zlib.net/zlib-${zlibVers}.tar.gz 
+    wget -N https://www.openssl.org/source/openssl-${verOpenssl}.tar.gz
+	wget -N https://ftp.pcre.org/pub/pcre/pcre-${verPcre}.tar.gz
+	wget -N https://www.zlib.net/zlib-${verZlib}.tar.gz 
     wget -N https://github.com/nbs-system/naxsi/archive/${verNaxsi}.tar.gz
 ###-------------------------------------------------------------------------###
 ### Download and decompress modules										    ###
@@ -453,70 +453,15 @@ processModules()
 
 
 ###############################################################################
-### Compile Nginx    														###
-###                                                                   		###
+### Fnginxcompile()  														###
+### Compile Nginx                                                     		###
 ###-------------------------------------------------------------------------###
-nginxCompile()
+Fnginxcompile()
 {
-cd ${buildDir}/nginx \
-&& ./auto/configure --prefix=/etc/nginx \
-                    --sbin-path=/usr/sbin/nginx \
-                    --conf-path=/etc/nginx/nginx.conf \
-                    --lock-path=/etc/nginx/lock/nginx.lock \
-                    --pid-path=/etc/nginx/pid/nginx.pid \
-                    --error-log-path=/var/log/nginx/error.log \
-                    --http-log-path=/var/log/nginx/access.log \
-                    --http-client-body-temp-path=/var/cache/nginx/client \
-                    --http-proxy-temp-path=/var/cache/nginx/proxy \
-                    --http-fastcgi-temp-path=/var/cache/nginx/fastcgi \
-                    --http-uwsgi-temp-path=/var/cache/nginx/uwsgi \
-                    --http-scgi-temp-path=/var/cache/nginx/scgi \
-                    --user=www-data \
-                    --group=www-data \
-                    --with-poll_module \
-                    --with-threads \
-                    --with-file-aio \
-                    --with-http_ssl_module \
-                    --with-http_v2_module \
-                    --with-http_realip_module \
-                    --with-http_addition_module \
-                    --with-http_xslt_module \
-                    --with-http_image_filter_module \
-                    --with-http_sub_module \
-                    --with-http_dav_module \
-                    --with-http_flv_module \
-                    --with-http_mp4_module \
-                    --with-http_gunzip_module \
-                    --with-http_gzip_static_module \
-                    --with-http_auth_request_module \
-                    --with-http_random_index_module \
-                    --with-http_secure_link_module \
-                    --with-http_degradation_module \
-                    --with-http_slice_module \
-                    --with-http_stub_status_module \
-                    --with-stream \
-                    --with-stream_ssl_module \
-                    --with-stream_realip_module \
-                    --with-stream_geoip_module \
-                    --with-stream_ssl_preread_module \
-                    --with-google_perftools_module \
-                    --with-pcre=${buildDir}/packages/pcre \
-                    --with-pcre-jit \
-                    --with-zlib=${buildDir}/packages/zlib \
-                    --with-openssl==${buildDir}/packages/openssl \
-                    --add-module==${buildDir}/naxsi/naxsi_src \
-                    --add-module==${buildDir}/ngx_devel_kit \
-                    --add-module==${buildDir}/nginx-module-vts \
-                    --add-module==${buildDir}/ngx_brotli \
-                    --add-module==${buildDir}/headers-more-nginx-module \
-                    --add-module==${buildDir}/set-misc-nginx-module \
-                    --add-module=${buildDir}/ngx_pagespeed-${pagespeedVers}
-#    make -j ${cpuCount}
-	cd ${buildDir}/nginx
-	apt-get source nginx
+	cd ${buildDir}/nginx 
 	apt-get build-dep nginx
-	dpkg-buildpackage -b
-	dpkg-buildpackage -uc -b
+#	dpkg-buildpackage -b
+#	dpkg-buildpackage -uc -b
 }
 ###                                                                   		###
 ###-------------------------------------------------------------------------###
@@ -524,12 +469,17 @@ cd ${buildDir}/nginx \
 
 
 ###############################################################################
-### Configure Nginx			     											###
-###                                                                  		###
+### Fnginxconfigure()		     											###
+### Configure Nginx                                                    		###
 ###-------------------------------------------------------------------------###
 ###                                                                  		###
-nginxConfigure()
+Fnginxconfigure()
 {
+	dpkg --install nginx_1.11.2-1~xenial_amd64.deb
+	apt-mark hold nginx
+	dpkg --install nginx-module-geoip_1.11.2-1~xenial_amd64.deb
+	apt-mark hold nginx-module-geoip
+	
 	rm -rf /etc/nginx/config/*.default
     rm /etc/nginx/nginx.conf
     rm /etc/nginx/fastcgi.conf
@@ -548,16 +498,12 @@ nginxConfigure()
 ###                                                                   		###
 ###-------------------------------------------------------------------------###
 ###############################################################################
-dpkg --install nginx_1.11.2-1~xenial_amd64.deb
-apt-mark hold nginx
-dpkg --install nginx-module-geoip_1.11.2-1~xenial_amd64.deb
-apt-mark hold nginx-module-geoip
 
 ###############################################################################
-### Remove Nginx													  	 	###
-###                                                               	    	###
+### Fremovenginx()													  	 	###
+### Remove Nginx                                                   	    	###
 ###-------------------------------------------------------------------------###
-removeNginx()	{
+Fremovenginx()	{
 	apt-get -y remove nginx
 	apt-get -y purge nginx
 }
@@ -566,13 +512,13 @@ removeNginx()	{
 ###############################################################################
 
 ###############################################################################
-### Cleanup - Remove all repository									    	###
-###                                                               	    	###
+### Fcleanup()					 									    	###
+### Cleanup - Remove all repository                                	    	###
 ###-------------------------------------------------------------------------###
 ### There's no need to keep any repo since its only for compiling.     		###
 ### Once package build well, it is save to remove all nginx repo. 	    	###
 ###-------------------------------------------------------------------------###
-cleanup()	{
+Fcleanup()	{
     mv ${buildDir}/sourceset-${sourceSet} ${homeDir}
     rm -rf ${buildDir}
     add-apt-repository -r -y "deb ${repoNginx} ${linuxVer} nginx"
