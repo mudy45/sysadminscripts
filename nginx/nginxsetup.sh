@@ -203,9 +203,12 @@ Fsetrepolinux()	{
 ###                                                                  	    ###
 Fhelp()	{
   	cat << EOU
-${0} [-options]
+echo -e "Usage:
+		sudo su
+		${0} [-options -options -options ...]
 Compile Custom Nginx on ${buildDir}, save downloaded packages on 
-${buildDir}/sourceset-${sourceSet). COfiguration in the script.
+${buildDir}/sourceset-${sourceSet). Must be run as root.\n
+Options:
 -h | --help     	This message.
 -9 | --allrepo		View all repo, add all repository, show available
 					version and exit. Usefull to decide which one to use.
@@ -218,8 +221,7 @@ ${buildDir}/sourceset-${sourceSet). COfiguration in the script.
 -2 | --repobck		Set backports repo
 -1 | --repolinux	Set Linux Nginx repo
 -0 | --resetrepo	Reset repo to distro's default, remove all nginx repo
-If multiple repo selected, last repo will be chosen.
-
+If multiple repo selected, last repo will be chosen.\n
 -c | --compile		Compile package
 -u | --uninstall	Uninstall existing web servers
 -e | --erase		Erase before compile
@@ -229,8 +231,7 @@ If multiple repo selected, last repo will be chosen.
 -b | --backupset	Backup current source set to compile later
 -l | --listset		List backup source set
 -g | --gendhparam	Generate dhparam
--s num | --selectset num	Mark backup source set num to use
-
+-s | --useset		Mark backup source set num to use\n
 Setup folder:                                                 	  
 Nginx User & Group 	= www-data				                      
 Nginx HTTP Folder  	= /var/www                                  	  
@@ -241,6 +242,12 @@ Backup source set	= /root/backup/nginx/sourceset-{$num}"
  	exit
 }
 
+###-------------------------------------------------------------------------###
+### Standard must root - call Fhelp()                              		    ###
+###                                         	                      	    ###
+if [[ $(whoami) != 'root']] && echo -e "Must be root to run $0\n"; then Fhelp; fi
+###                                         	                      	    ###
+###############################################################################
 
 
 ###############################################################################
@@ -532,40 +539,56 @@ Fcleanup()	{
 ###-------------------------------------------------------------------------###
 ###############################################################################
 
+
+
 ###############################################################################
 ### Main program													    	###
 ###                                                               	    	###
 ###-------------------------------------------------------------------------###
-### 															     		###
+### nginxsetup																###
 ### 															 	    	###
-###-------------------------------------------------------------------------###
-if [[ $(whoami) != 'root']] && echo -e "Must be root to run $0\n"; then Fhelp; fi
-
-while [ $# -gt 0 ]; do    # Until you run out of parameters . . .
-  case "$1" in
-    -d|--debug)
-              # "-d" or "--debug" parameter?
-              DEBUG=1
-              ;;
-    -c|--conf)
-              CONFFILE="$2"
-              shift
-              if [ ! -f $CONFFILE ]; then
-                echo "Error: Supplied file doesn't exist!"
-                exit $E_CONFFILE     # File not found error.
-              fi
-              ;;
-  esac
-  shift       # Check next set of parameters.
-done
-
-setRepolinux
-prepareOnce
+### 															 	    	###
 ###-------------------------------------------------------------------------###
 ### 0 delrepoAll, 1 addrepoLinux, 2 addrepoBackports, 						###
 ### 3 addrepoPpasta, 4 addrepoPpadev, 5 addrepoNginx, 6 gitdebian			###
 ### 7 gitnginx, 9 addrepoReview												###
-case $1 in
+###
+#1	Choose action:
+#	1) Download all repo, exit to review
+#	2) Choose a repo, continue
+#2 	Select Nginx repo to set:
+#	1) Repo this Linux
+#	2) Repo this Linux for Nginx
+#	3) Repo Backports for Nginx
+#	4) Repo PPA Nginx Stable
+#	5) Repo PPA Nginx Development
+#	6) Git Debian/Ubuntu for Nginx (no pkg, compile only)
+#	7) Git Nginx for Debian/Ubuntu (no pkg, compile only)
+#3	Choose action:
+#	1) Install existing package, exit
+#	2) Compile package, continue
+#4	Select additional modules:
+#	1) Add PageSpeed?
+#	2) Add Brotli?
+#	3) Add Naxsi?
+#	4) Remove RTMP?
+#cat rules, option to abort
+#Next to compile
+#	Save sourceset for backup?
+#	Restore Repo?
+#	Send package?
+####### configurenginx -f
+#	Uninstall all web server
+#	Install nginx
+#	Configure nginx?
+# 	Install PHP?
+#	Install Letsencrypt
+
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+	-h | --help     	This message.
+	
 	"-0") 	aptNginx delrepoAll
 			apt-cache policy nginx
 			exit 1	;;
@@ -585,7 +608,32 @@ case $1 in
 			getGitsrc gitnginx ;;
 	"-9") 	aptNginx addrepoReview ;;
 			#-----> always exit to view result.
-esac
+-c | --compile		Compile package
+-u | --uninstall	Uninstall existing web servers
+-e | --erase		Erase before compile
+-i | --install		Install & configure after compile
+-d | --dry-run		Simulate, dry run only
+-p | --pause		Interactive, sets of pause and questions
+-b | --backupset	Backup current source set to compile later
+-l | --listset		List backup source set
+-g | --gendhparam	Generate dhparam
+-s | --useset		Mark backup source set num to use\n
+    -c|--conf)
+              CONFFILE="$2"
+              shift
+              if [ ! -f $CONFFILE ]; then
+                echo "Error: Supplied file doesn't exist!"
+                exit $E_CONFFILE     # File not found error.
+              fi
+              ;;
+			  
+
+  esac
+  shift       # Check next set of parameters.
+done
+
+setRepolinux
+prepareOnce
 ###-------------------------------------------------------------------------###
 getModules
 processModules
