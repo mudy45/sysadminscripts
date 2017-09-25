@@ -77,10 +77,10 @@ Fwaitfor()	{
 swappinessNum = "30"
 ###----> Create swap 2x RAM
 swapSize = "1024k"
-###----> Change this SSH port number
+###----> Change to your SSH port number preference
 customSshport = "22222"
 
-###----> Update server time
+###----> Update server time, change to yourtimezone
 timedatectl set-timezone Asia/Jakarta
 timedatectl 
 Fwaitfor
@@ -125,29 +125,29 @@ apt-get install mc
 /mysql/lazymariasetup.sh
 
 ###----> Install Nginx
-/nginx/lazynginxsetup.sh
+#/nginx/lazynginxsetup.sh
 
 ###----> Install PHP
-/php/lazyphpsetup.sh
+#/php/lazyphpsetup.sh
 
 ###----> Install PHP
-/nodejs/lazynodejssetup.sh
+#/nodejs/lazynodejssetup.sh
 
 ###----> CSF
-/csf/lazycsfsetup.sh
+#/csf/lazycsfsetup.sh
 
 ###----> Munin
-/munin/lazymuninsetup.sh
+#/munin/lazymuninsetup.sh
 
 ###----> Nagios
-/nagios/lazynagiossetup.sh
+#/nagios/lazynagiossetup.sh
 
 ###----> Wordpress
-/wp/lazywpsetup.sh
+#/wp/lazywpsetup.sh
 
 ###----> Lazy Server
-/lazyserver/stats.sh
-/lazyserver/bksy.sh
+#/lazyserver/stats.sh
+#/lazyserver/bksy.sh
 
 ###----> Restart server
 sudo reboot
